@@ -19,6 +19,7 @@ import { StreamingAvatarProvider, StreamingAvatarSessionState } from "./logic";
 import { LoadingIcon } from "./Icons";
 import { MessageHistory } from "./AvatarSession/MessageHistory";
 import { QualitySelector } from "./AvatarSession/QualitySelector";
+import { WavyBackground } from "./ui/wavy-background";
 
 const HARDCODED_CONFIG: StartAvatarRequest = {
   quality: AvatarQuality.Medium,
@@ -256,23 +257,49 @@ function InteractiveAvatar() {
   return (
     <div className="relative h-screen w-screen bg-black overflow-hidden">
       {sessionState === StreamingAvatarSessionState.INACTIVE ? (
-        // Pre-session: Only show start button
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="text-center">
-            <Button 
-              className="!px-12 !py-4 !text-lg !bg-gradient-to-r !from-blue-600 !to-purple-600 hover:!from-blue-700 hover:!to-purple-700 !rounded-xl !shadow-2xl !transform !transition-all !duration-200 hover:!scale-105"
-              onClick={startSessionV2}
-              disabled={isRetrying}
-            >
-              {isRetrying ? `Retrying... (${retryCount}/3)` : "Start Session"}
-            </Button>
-            {isRetrying && (
-              <p className="text-white/70 mt-4">
-                Reconnecting to avatar service...
+        // Pre-session: Beautiful wavy background with start button
+        <WavyBackground 
+          className="max-w-4xl mx-auto pb-40"
+          colors={["#38bdf8", "#818cf8", "#c084fc", "#e879f9", "#22d3ee"]}
+          waveWidth={50}
+          backgroundFill="black"
+          speed="fast"
+          waveOpacity={0.5}
+          blur={10}
+        >
+          <div className="text-center space-y-8">
+            <div className="space-y-4">
+              <h1 className="text-4xl md:text-6xl lg:text-7xl text-white font-bold text-center bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+                AI Conversation 2.0
+              </h1>
+              <p className="text-lg md:text-xl mt-4 text-white/80 font-normal text-center max-w-2xl mx-auto leading-relaxed">
+                Leverage the power of Interactive avatars in every business and create beautiful conversations
               </p>
-            )}
+            </div>
+            
+            <div className="pt-8">
+              <Button 
+                className="!px-12 !py-4 !text-lg !bg-gradient-to-r !from-blue-600 !to-purple-600 hover:!from-blue-700 hover:!to-purple-700 !rounded-xl !shadow-2xl !transform !transition-all !duration-300 hover:!scale-105 !border-0 !font-semibold !tracking-wide"
+                onClick={startSessionV2}
+                disabled={isRetrying}
+              >
+                {isRetrying ? (
+                  <div className="flex items-center gap-3">
+                    <LoadingIcon className="animate-spin" size={20} />
+                    Retrying... ({retryCount}/3)
+                  </div>
+                ) : (
+                  "Start Session"
+                )}
+              </Button>
+              {isRetrying && (
+                <p className="text-white/60 mt-4 text-sm">
+                  Reconnecting to avatar service...
+                </p>
+              )}
+            </div>
           </div>
-        </div>
+        </WavyBackground>
       ) : (
         // During session: Full interface
         <>
