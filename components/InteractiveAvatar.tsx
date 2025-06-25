@@ -126,8 +126,17 @@ function InteractiveAvatar() {
         console.log("Avatar stopped talking", e);
       });
 
-      // Add error event handler for WebRTC issues
+      // Add error event handler for WebRTC issues with improved filtering
       avatar.on('error', (error) => {
+        // Check if this is a benign shutdown error during manual stop
+        if (isManualStop && 
+            error?.error?.errorDetail === 'sctp-failure' && 
+            error?.error?.sctpCauseCode === 12) {
+          // Suppress this specific benign shutdown error
+          console.log("Benign WebRTC shutdown error suppressed during manual stop");
+          return;
+        }
+        
         console.error("Avatar error:", error);
         // Only handle error if it wasn't a manual stop
         if (!isManualStop) {

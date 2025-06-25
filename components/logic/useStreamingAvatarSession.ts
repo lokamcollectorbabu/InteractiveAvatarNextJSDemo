@@ -54,7 +54,7 @@ export const useStreamingAvatarSession = () => {
   );
 
   const stop = useCallback(async () => {
-    // Remove all event listeners explicitly
+    // Remove all event listeners explicitly except error handler
     if (avatarRef.current) {
       avatarRef.current.off(StreamingEvents.STREAM_READY, handleStream);
       avatarRef.current.off(StreamingEvents.STREAM_DISCONNECTED, stop);
@@ -67,7 +67,6 @@ export const useStreamingAvatarSession = () => {
       avatarRef.current.off(StreamingEvents.AVATAR_TALKING_MESSAGE, handleStreamingTalkingMessage);
       avatarRef.current.off(StreamingEvents.USER_END_MESSAGE, handleEndMessage);
       avatarRef.current.off(StreamingEvents.AVATAR_END_MESSAGE, handleEndMessage);
-      avatarRef.current.off('error');
     }
     
     clearMessages();
@@ -76,7 +75,15 @@ export const useStreamingAvatarSession = () => {
     setIsUserTalking(false);
     setIsAvatarTalking(false);
     setStream(null);
+    
+    // Stop avatar and then remove error handler to catch any shutdown errors
     await avatarRef.current?.stopAvatar();
+    
+    // Remove error handler after stopAvatar completes
+    if (avatarRef.current) {
+      avatarRef.current.off('error');
+    }
+    
     setSessionState(StreamingAvatarSessionState.INACTIVE);
   }, [
     handleStream,
