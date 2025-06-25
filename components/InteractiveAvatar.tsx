@@ -82,11 +82,17 @@ function InteractiveAvatar() {
       });
 
       await startAvatar(config);
-      await startVoiceChat();
     } catch (error) {
       console.error("Error starting avatar session:", error);
     }
   });
+
+  // Start voice chat only when the session is fully connected
+  useEffect(() => {
+    if (sessionState === StreamingAvatarSessionState.CONNECTED) {
+      startVoiceChat();
+    }
+  }, [sessionState, startVoiceChat]);
 
   useUnmount(() => {
     stopAvatar();
