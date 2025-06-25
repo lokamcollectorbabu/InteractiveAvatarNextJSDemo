@@ -17,23 +17,37 @@ export const MessageHistory: React.FC = () => {
   return (
     <div
       ref={containerRef}
-      className="w-[600px] overflow-y-auto flex flex-col gap-2 px-2 py-2 text-white self-center max-h-[150px]"
+      className="h-full overflow-y-auto p-4 space-y-3"
     >
-      {messages.map((message) => (
-        <div
-          key={message.id}
-          className={`flex flex-col gap-1 max-w-[350px] ${
-            message.sender === MessageSender.CLIENT
-              ? "self-end items-end"
-              : "self-start items-start"
-          }`}
-        >
-          <p className="text-xs text-zinc-400">
-            {message.sender === MessageSender.AVATAR ? "Avatar" : "You"}
-          </p>
-          <p className="text-sm">{message.content}</p>
+      {messages.length === 0 ? (
+        <div className="flex items-center justify-center h-full text-white/50 text-sm">
+          Conversation will appear here...
         </div>
-      ))}
+      ) : (
+        messages.map((message) => (
+          <div
+            key={message.id}
+            className={`flex ${
+              message.sender === MessageSender.CLIENT
+                ? "justify-end"
+                : "justify-start"
+            }`}
+          >
+            <div
+              className={`max-w-[80%] rounded-2xl px-4 py-2 ${
+                message.sender === MessageSender.CLIENT
+                  ? "bg-blue-600/80 text-white ml-4"
+                  : "bg-white/10 text-white mr-4 border border-white/20"
+              }`}
+            >
+              <div className="text-xs opacity-70 mb-1">
+                {message.sender === MessageSender.AVATAR ? "Avatar" : "You"}
+              </div>
+              <div className="text-sm leading-relaxed">{message.content}</div>
+            </div>
+          </div>
+        ))
+      )}
     </div>
   );
 };

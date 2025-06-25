@@ -22,11 +22,11 @@ export function Select<T>(props: SelectProps<T>) {
       open={isOpen}
       onOpenChange={setIsOpen}
     >
-      <SelectPrimitive.Trigger className="w-full text-white text-sm bg-zinc-700 py-2 px-6 rounded-lg cursor-pointer flex items-center justify-between h-fit disabled:opacity-50 min-h-[36px]">
-        <div className={`${props.value ? "text-white" : "text-zinc-400"}`}>
+      <SelectPrimitive.Trigger className="w-full text-white text-sm bg-black/60 backdrop-blur-sm py-2 px-4 rounded-lg cursor-pointer flex items-center justify-between h-fit disabled:opacity-50 min-h-[36px] border border-white/20 hover:bg-black/80 transition-colors">
+        <div className={`${props.value ? "text-white" : "text-white/60"}`}>
           {props.value ? props.value : props.placeholder}
         </div>
-        <ChevronDownIcon className="w-4 h-4" />
+        <ChevronDownIcon className="w-4 h-4 text-white/60" />
       </SelectPrimitive.Trigger>
 
       <SelectPrimitive.Portal>
@@ -35,15 +35,15 @@ export function Select<T>(props: SelectProps<T>) {
           position="popper"
           sideOffset={5}
         >
-          <SelectPrimitive.Viewport className="rounded-lg border border-zinc-600 bg-zinc-700 shadow-lg py-1">
+          <SelectPrimitive.Viewport className="rounded-lg border border-white/20 bg-black/80 backdrop-blur-sm shadow-2xl py-1">
             {props.options.map((option) => {
               const isSelected = props.isSelected(option);
 
               return (
                 <div
                   key={props.renderOption(option)?.toString()}
-                  className={`py-2 px-4 cursor-pointer hover:bg-zinc-600 outline-none text-sm ${
-                    isSelected ? "text-white bg-zinc-500" : "text-zinc-400"
+                  className={`py-2 px-4 cursor-pointer hover:bg-white/10 outline-none text-sm transition-colors ${
+                    isSelected ? "text-white bg-white/20" : "text-white/80"
                   }`}
                   onClick={() => {
                     props.onSelect(option);

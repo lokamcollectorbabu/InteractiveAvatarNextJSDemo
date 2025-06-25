@@ -11,7 +11,6 @@ import { useEffect, useRef, useState } from "react";
 import { useMemoizedFn, useUnmount } from "ahooks";
 
 import { Button } from "./Button";
-import { AvatarConfig } from "./AvatarConfig";
 import { AvatarVideo } from "./AvatarSession/AvatarVideo";
 import { useStreamingAvatarSession } from "./logic/useStreamingAvatarSession";
 import { AvatarControls } from "./AvatarSession/AvatarControls";
@@ -19,13 +18,12 @@ import { useVoiceChat } from "./logic/useVoiceChat";
 import { StreamingAvatarProvider, StreamingAvatarSessionState } from "./logic";
 import { LoadingIcon } from "./Icons";
 import { MessageHistory } from "./AvatarSession/MessageHistory";
+import { QualitySelector } from "./AvatarSession/QualitySelector";
 
-import { AVATARS } from "@/app/lib/constants";
-
-const DEFAULT_CONFIG: StartAvatarRequest = {
-  quality: AvatarQuality.Low,
-  avatarName: AVATARS[0].avatar_id,
-  knowledgeId: undefined,
+const HARDCODED_CONFIG: StartAvatarRequest = {
+  quality: AvatarQuality.Medium,
+  avatarName: "Graham_Chair_Sitting_public",
+  knowledgeId: "389e0c9a964c412480c1751cc30f1c3a",
   voice: {
     rate: 1.5,
     emotion: VoiceEmotion.EXCITED,
@@ -38,35 +36,19 @@ const DEFAULT_CONFIG: StartAvatarRequest = {
   },
 };
 
+const HARDCODED_API_KEY = "ZTE4MjRmMjg5NGRjNDMxNjg3MzFlZjFjNTBjYTBiYjctMTc0OTIyNzIwMg==";
+
 function InteractiveAvatar() {
   const { initAvatar, startAvatar, stopAvatar, sessionState, stream } =
     useStreamingAvatarSession();
   const { startVoiceChat } = useVoiceChat();
 
-  const [config, setConfig] = useState<StartAvatarRequest>(DEFAULT_CONFIG);
-
+  const [config, setConfig] = useState<StartAvatarRequest>(HARDCODED_CONFIG);
   const mediaStream = useRef<HTMLVideoElement>(null);
 
-  async function fetchAccessToken() {
+  const startSessionV2 = useMemoizedFn(async () => {
     try {
-      const response = await fetch("/api/get-access-token", {
-        method: "POST",
-      });
-      const token = await response.text();
-
-      console.log("Access Token:", token); // Log the token to verify
-
-      return token;
-    } catch (error) {
-      console.error("Error fetching access token:", error);
-      throw error;
-    }
-  }
-
-  const startSessionV2 = useMemoizedFn(async (isVoiceChat: boolean) => {
-    try {
-      const newToken = await fetchAccessToken();
-      const avatar = initAvatar(newToken);
+      const avatar = initAvatar(HARDCODED_API_KEY);
 
       avatar.on(StreamingEvents.AVATAR_START_TALKING, (e) => {
         console.log("Avatar started talking", e);
@@ -100,10 +82,7 @@ function InteractiveAvatar() {
       });
 
       await startAvatar(config);
-
-      if (isVoiceChat) {
-        await startVoiceChat();
-      }
+      await startVoiceChat();
     } catch (error) {
       console.error("Error starting avatar session:", error);
     }
@@ -122,35 +101,86 @@ function InteractiveAvatar() {
     }
   }, [mediaStream, stream]);
 
+  const handleQualityChange = (quality: AvatarQuality) => {
+    setConfig(prev => ({ ...prev, quality }));
+  };
+
   return (
-    <div className="w-full flex flex-col gap-4">
-      <div className="flex flex-col rounded-xl bg-zinc-900 overflow-hidden">
-        <div className="relative w-full aspect-video overflow-hidden flex flex-col items-center justify-center">
-          {sessionState !== StreamingAvatarSessionState.INACTIVE ? (
-            <AvatarVideo ref={mediaStream} />
-          ) : (
-            <AvatarConfig config={config} onConfigChange={setConfig} />
-          )}
+    <div className="relative h-screen w-screen bg-black overflow-hidden">
+      {sessionState === StreamingAvatarSessionState.INACTIVE ? (
+        // Pre-session: Only show start button
+        <div className="absolute inset-0 flex items-center justify-center">
+          <Button 
+            className="!px-12 !py-4 !text-lg !bg-gradient-to-r !from-blue-600 !to-purple-600 hover:!from-blue-700 hover:!to-purple-700 !rounded-xl !shadow-2xl !transform !transition-all !duration-200 hover:!scale-105"
+            onClick={startSessionV2}
+          >
+            Start Session
+          </Button>
         </div>
-        <div className="flex flex-col gap-3 items-center justify-center p-4 border-t border-zinc-700 w-full">
-          {sessionState === StreamingAvatarSessionState.CONNECTED ? (
-            <AvatarControls />
-          ) : sessionState === StreamingAvatarSessionState.INACTIVE ? (
-            <div className="flex flex-row gap-4">
-              <Button onClick={() => startSessionV2(true)}>
-                Start Voice Chat
-              </Button>
-              <Button onClick={() => startSessionV2(false)}>
-                Start Text Chat
+      ) : (
+        // During session: Full interface
+        <>
+          {/* Main video container */}
+          <div className="absolute inset-0">
+            {sessionState !== StreamingAvatarSessionState.INACTIVE && (
+              <AvatarVideo ref={mediaStream} />
+            )}
+          </div>
+
+          {/* Semi-transparent overlay for controls */}
+          <div className="absolute inset-0 pointer-events-none">
+            {/* Top-left: Quality selector */}
+            <div className="absolute top-6 left-6 pointer-events-auto">
+              <QualitySelector 
+                currentQuality={config.quality}
+                onQualityChange={handleQualityChange}
+              />
+            </div>
+
+            {/* Top-right: Stop button and Interrupt button */}
+            <div className="absolute top-6 right-6 flex gap-3 pointer-events-auto">
+              {sessionState === StreamingAvatarSessionState.CONNECTED && (
+                <Button
+                  className="!bg-red-600/80 hover:!bg-red-700/80 !text-white !px-4 !py-2 !rounded-lg !backdrop-blur-sm !border !border-red-500/30"
+                  onClick={stopAvatar}
+                >
+                  Interrupt
+                </Button>
+              )}
+              <Button
+                className="!bg-zinc-800/80 hover:!bg-zinc-700/80 !text-white !px-4 !py-2 !rounded-lg !backdrop-blur-sm !border !border-zinc-600/30"
+                onClick={stopAvatar}
+              >
+                Stop Session
               </Button>
             </div>
-          ) : (
-            <LoadingIcon />
+
+            {/* Bottom-center: Microphone controls */}
+            <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 pointer-events-auto">
+              {sessionState === StreamingAvatarSessionState.CONNECTED ? (
+                <AvatarControls />
+              ) : sessionState === StreamingAvatarSessionState.CONNECTING ? (
+                <div className="flex items-center justify-center">
+                  <LoadingIcon className="animate-spin text-white" size={48} />
+                </div>
+              ) : null}
+            </div>
+          </div>
+
+          {/* Left side: Conversation transcript */}
+          {sessionState === StreamingAvatarSessionState.CONNECTED && (
+            <div className="absolute left-6 top-20 bottom-20 w-80 pointer-events-auto">
+              <div className="h-full bg-black/40 backdrop-blur-sm rounded-xl border border-white/10 overflow-hidden">
+                <div className="p-4 border-b border-white/10">
+                  <h3 className="text-white font-medium">Conversation</h3>
+                </div>
+                <div className="h-full overflow-hidden">
+                  <MessageHistory />
+                </div>
+              </div>
+            </div>
           )}
-        </div>
-      </div>
-      {sessionState === StreamingAvatarSessionState.CONNECTED && (
-        <MessageHistory />
+        </>
       )}
     </div>
   );
