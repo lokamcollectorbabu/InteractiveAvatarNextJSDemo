@@ -54,8 +54,22 @@ export const useStreamingAvatarSession = () => {
   );
 
   const stop = useCallback(async () => {
-    avatarRef.current?.off(StreamingEvents.STREAM_READY, handleStream);
-    avatarRef.current?.off(StreamingEvents.STREAM_DISCONNECTED, stop);
+    // Remove all event listeners explicitly
+    if (avatarRef.current) {
+      avatarRef.current.off(StreamingEvents.STREAM_READY, handleStream);
+      avatarRef.current.off(StreamingEvents.STREAM_DISCONNECTED, stop);
+      avatarRef.current.off(StreamingEvents.CONNECTION_QUALITY_CHANGED);
+      avatarRef.current.off(StreamingEvents.USER_START);
+      avatarRef.current.off(StreamingEvents.USER_STOP);
+      avatarRef.current.off(StreamingEvents.AVATAR_START_TALKING);
+      avatarRef.current.off(StreamingEvents.AVATAR_STOP_TALKING);
+      avatarRef.current.off(StreamingEvents.USER_TALKING_MESSAGE, handleUserTalkingMessage);
+      avatarRef.current.off(StreamingEvents.AVATAR_TALKING_MESSAGE, handleStreamingTalkingMessage);
+      avatarRef.current.off(StreamingEvents.USER_END_MESSAGE, handleEndMessage);
+      avatarRef.current.off(StreamingEvents.AVATAR_END_MESSAGE, handleEndMessage);
+      avatarRef.current.off('error');
+    }
+    
     clearMessages();
     stopVoiceChat();
     setIsListening(false);
@@ -74,6 +88,9 @@ export const useStreamingAvatarSession = () => {
     clearMessages,
     setIsUserTalking,
     setIsAvatarTalking,
+    handleUserTalkingMessage,
+    handleStreamingTalkingMessage,
+    handleEndMessage,
   ]);
 
   const start = useCallback(
@@ -147,6 +164,13 @@ export const useStreamingAvatarSession = () => {
     ],
   );
 
+  const interrupt = useCallback(async () => {
+    if (!avatarRef.current) {
+      throw new Error("Avatar is not initialized");
+    }
+    await avatarRef.current.interrupt();
+  }, [avatarRef]);
+
   return {
     avatarRef,
     sessionState,
@@ -154,5 +178,6 @@ export const useStreamingAvatarSession = () => {
     initAvatar: init,
     startAvatar: start,
     stopAvatar: stop,
+    interruptAvatar: interrupt,
   };
 };

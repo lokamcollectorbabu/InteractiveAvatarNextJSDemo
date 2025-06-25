@@ -201,15 +201,11 @@ function InteractiveAvatar() {
       // Stop voice chat first
       stopVoiceChat();
       
-      // Stop avatar session
+      // Stop avatar session (this will handle event listener cleanup)
       await stopAvatar();
       
       // Clean up avatar reference
-      if (avatarRef.current) {
-        // Remove all event listeners to prevent any callbacks
-        avatarRef.current.removeAllListeners();
-        avatarRef.current = null;
-      }
+      avatarRef.current = null;
       
       console.log("Session stopped successfully");
     } catch (error) {
@@ -223,10 +219,10 @@ function InteractiveAvatar() {
   // Start voice chat only when the session is fully connected
   useEffect(() => {
     if (sessionState === StreamingAvatarSessionState.CONNECTED && !isRetrying && !isManualStop) {
-      // Add a small delay to ensure the connection is stable
+      // Increased delay to give audio system more time to initialize
       setTimeout(() => {
         startVoiceChat();
-      }, 1000);
+      }, 2000);
     }
   }, [sessionState, startVoiceChat, isRetrying, isManualStop]);
 
