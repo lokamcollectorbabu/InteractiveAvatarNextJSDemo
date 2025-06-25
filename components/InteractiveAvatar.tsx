@@ -46,6 +46,7 @@ function InteractiveAvatar() {
   const [config, setConfig] = useState<StartAvatarRequest>(HARDCODED_CONFIG);
   const [isRetrying, setIsRetrying] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
+  const [isManualStop, setIsManualStop] = useState(false); // Track if user manually stopped
   const mediaStream = useRef<HTMLVideoElement>(null);
   const avatarRef = useRef<any>(null);
 
@@ -65,6 +66,7 @@ function InteractiveAvatar() {
   const startSessionV2 = useMemoizedFn(async () => {
     try {
       setIsRetrying(false);
+      setIsManualStop(false); // Reset manual stop flag when starting new session
       
       // Request microphone permission first
       const hasPermission = await requestMicrophonePermission();
@@ -78,8 +80,12 @@ function InteractiveAvatar() {
 
       // Enhanced error handling for WebRTC issues
       avatar.on(StreamingEvents.STREAM_DISCONNECTED, () => {
-        console.log("Stream disconnected - attempting reconnection");
-        handleConnectionError();
+        console.log("Stream disconnected");
+        // Only attempt reconnection if it wasn't a manual stop
+        if (!isManualStop) {
+          console.log("Attempting reconnection...");
+          handleConnectionError();
+        }
       });
 
       avatar.on(StreamingEvents.STREAM_READY, (event) => {
@@ -123,17 +129,28 @@ function InteractiveAvatar() {
       // Add error event handler for WebRTC issues
       avatar.on('error', (error) => {
         console.error("Avatar error:", error);
-        handleConnectionError();
+        // Only handle error if it wasn't a manual stop
+        if (!isManualStop) {
+          handleConnectionError();
+        }
       });
 
       await startAvatar(config);
     } catch (error) {
       console.error("Error starting avatar session:", error);
-      handleConnectionError();
+      // Only handle error if it wasn't a manual stop
+      if (!isManualStop) {
+        handleConnectionError();
+      }
     }
   });
 
   const handleConnectionError = useMemoizedFn(async () => {
+    // Don't retry if user manually stopped the session
+    if (isManualStop) {
+      return;
+    }
+
     if (retryCount < 3 && !isRetrying) {
       setIsRetrying(true);
       setRetryCount(prev => prev + 1);
@@ -150,11 +167,16 @@ function InteractiveAvatar() {
       
       // Wait a bit before retrying
       setTimeout(() => {
-        startSessionV2();
+        // Double check that user didn't manually stop during the timeout
+        if (!isManualStop) {
+          startSessionV2();
+        }
       }, 2000);
     } else {
       setIsRetrying(false);
-      alert("Connection failed. Please check your internet connection and try again.");
+      if (!isManualStop) {
+        alert("Connection failed. Please check your internet connection and try again.");
+      }
     }
   });
 
@@ -171,27 +193,45 @@ function InteractiveAvatar() {
 
   const handleStopSession = useMemoizedFn(async () => {
     try {
+      console.log("User manually stopping session");
+      setIsManualStop(true); // Set flag to prevent automatic restart
+      setIsRetrying(false); // Stop any retry attempts
+      setRetryCount(0); // Reset retry count
+      
+      // Stop voice chat first
       stopVoiceChat();
+      
+      // Stop avatar session
       await stopAvatar();
-      avatarRef.current = null;
-      setRetryCount(0);
-      setIsRetrying(false);
+      
+      // Clean up avatar reference
+      if (avatarRef.current) {
+        // Remove all event listeners to prevent any callbacks
+        avatarRef.current.removeAllListeners();
+        avatarRef.current = null;
+      }
+      
+      console.log("Session stopped successfully");
     } catch (error) {
       console.error("Error stopping session:", error);
+      // Even if there's an error, ensure we're in the stopped state
+      setIsManualStop(true);
+      avatarRef.current = null;
     }
   });
 
   // Start voice chat only when the session is fully connected
   useEffect(() => {
-    if (sessionState === StreamingAvatarSessionState.CONNECTED && !isRetrying) {
+    if (sessionState === StreamingAvatarSessionState.CONNECTED && !isRetrying && !isManualStop) {
       // Add a small delay to ensure the connection is stable
       setTimeout(() => {
         startVoiceChat();
       }, 1000);
     }
-  }, [sessionState, startVoiceChat, isRetrying]);
+  }, [sessionState, startVoiceChat, isRetrying, isManualStop]);
 
   useUnmount(() => {
+    setIsManualStop(true); // Prevent any reconnection attempts during unmount
     handleStopSession();
   });
 
