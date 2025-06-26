@@ -37,7 +37,7 @@ const HARDCODED_CONFIG: StartAvatarRequest = {
   },
 };
 
-const HARDCODED_API_KEY = "ZTE4MjRmMjg5NGRjNDMxNjg3MzFlZjFjNTBjYTBiYjctMTc0OTIyNzIwMg==";
+const HARDCODED_API_KEY = "ZjVjNDYzODRlYTliNDRkMjk5ZWQyYjc0Y2Y5NDU2MGMtMTc1MDkxNjc5Mg==";
 
 function InteractiveAvatar() {
   const { initAvatar, startAvatar, stopAvatar, sessionState, stream, interruptAvatar } =
