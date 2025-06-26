@@ -37,11 +37,18 @@ const HARDCODED_CONFIG: StartAvatarRequest = {
   },
 };
 
-const HARDCODED_API_KEY = "ZjVjNDYzODRlYTliNDRkMjk5ZWQyYjc0Y2Y5NDU2MGMtMTc1MDkxNjc5Mg==";
+const HARDCODED_API_KEY =
+  "ZjVjNDYzODRlYTliNDRkMjk5ZWQyYjc0Y2Y5NDU2MGMtMTc1MDkxNjc5Mg==";
 
 function InteractiveAvatar() {
-  const { initAvatar, startAvatar, stopAvatar, sessionState, stream, interruptAvatar } =
-    useStreamingAvatarSession();
+  const {
+    initAvatar,
+    startAvatar,
+    stopAvatar,
+    sessionState,
+    stream,
+    interruptAvatar,
+  } = useStreamingAvatarSession();
   const { startVoiceChat, stopVoiceChat } = useVoiceChat();
 
   const [config, setConfig] = useState<StartAvatarRequest>(HARDCODED_CONFIG);
@@ -55,11 +62,14 @@ function InteractiveAvatar() {
   const requestMicrophonePermission = useMemoizedFn(async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
       // Close the stream immediately as we just needed permission
-      stream.getTracks().forEach(track => track.stop());
+      stream.getTracks().forEach((track) => track.stop());
+
       return true;
     } catch (error) {
       console.error("Microphone permission denied:", error);
+
       return false;
     }
   });
@@ -68,15 +78,20 @@ function InteractiveAvatar() {
     try {
       setIsRetrying(false);
       setIsManualStop(false); // Reset manual stop flag when starting new session
-      
+
       // Request microphone permission first
       const hasPermission = await requestMicrophonePermission();
+
       if (!hasPermission) {
-        alert("Microphone permission is required for voice interaction. Please allow microphone access and try again.");
+        alert(
+          "Microphone permission is required for voice interaction. Please allow microphone access and try again.",
+        );
+
         return;
       }
 
       const avatar = initAvatar(HARDCODED_API_KEY);
+
       avatarRef.current = avatar;
 
       // Enhanced error handling for WebRTC issues
@@ -128,16 +143,21 @@ function InteractiveAvatar() {
       });
 
       // Add error event handler for WebRTC issues with improved filtering
-      avatar.on('error', (error) => {
+      avatar.on("error", (error) => {
         // Check if this is a benign shutdown error during manual stop
-        if (isManualStop && 
-            error?.error?.errorDetail === 'sctp-failure' && 
-            error?.error?.sctpCauseCode === 12) {
+        if (
+          isManualStop &&
+          error?.error?.errorDetail === "sctp-failure" &&
+          error?.error?.sctpCauseCode === 12
+        ) {
           // Suppress this specific benign shutdown error
-          console.log("Benign WebRTC shutdown error suppressed during manual stop");
+          console.log(
+            "Benign WebRTC shutdown error suppressed during manual stop",
+          );
+
           return;
         }
-        
+
         console.error("Avatar error:", error);
         // Only handle error if it wasn't a manual stop
         if (!isManualStop) {
@@ -163,10 +183,10 @@ function InteractiveAvatar() {
 
     if (retryCount < 3 && !isRetrying) {
       setIsRetrying(true);
-      setRetryCount(prev => prev + 1);
-      
+      setRetryCount((prev) => prev + 1);
+
       console.log(`Attempting reconnection (${retryCount + 1}/3)...`);
-      
+
       // Stop current session
       try {
         await stopAvatar();
@@ -174,7 +194,7 @@ function InteractiveAvatar() {
       } catch (error) {
         console.error("Error stopping avatar during retry:", error);
       }
-      
+
       // Wait a bit before retrying
       setTimeout(() => {
         // Double check that user didn't manually stop during the timeout
@@ -185,14 +205,19 @@ function InteractiveAvatar() {
     } else {
       setIsRetrying(false);
       if (!isManualStop) {
-        alert("Connection failed. Please check your internet connection and try again.");
+        alert(
+          "Connection failed. Please check your internet connection and try again.",
+        );
       }
     }
   });
 
   const handleInterrupt = useMemoizedFn(async () => {
     try {
-      if (avatarRef.current && sessionState === StreamingAvatarSessionState.CONNECTED) {
+      if (
+        avatarRef.current &&
+        sessionState === StreamingAvatarSessionState.CONNECTED
+      ) {
         await interruptAvatar();
         console.log("Avatar interrupted successfully");
       }
@@ -207,16 +232,16 @@ function InteractiveAvatar() {
       setIsManualStop(true); // Set flag to prevent automatic restart
       setIsRetrying(false); // Stop any retry attempts
       setRetryCount(0); // Reset retry count
-      
+
       // Stop voice chat first
       stopVoiceChat();
-      
+
       // Stop avatar session (this will handle event listener cleanup)
       await stopAvatar();
-      
+
       // Clean up avatar reference
       avatarRef.current = null;
-      
+
       console.log("Session stopped successfully");
     } catch (error) {
       console.error("Error stopping session:", error);
@@ -228,7 +253,11 @@ function InteractiveAvatar() {
 
   // Start voice chat only when the session is fully connected
   useEffect(() => {
-    if (sessionState === StreamingAvatarSessionState.CONNECTED && !isRetrying && !isManualStop) {
+    if (
+      sessionState === StreamingAvatarSessionState.CONNECTED &&
+      !isRetrying &&
+      !isManualStop
+    ) {
       // Increased delay to give audio system more time to initialize
       setTimeout(() => {
         startVoiceChat();
@@ -251,21 +280,21 @@ function InteractiveAvatar() {
   }, [mediaStream, stream]);
 
   const handleQualityChange = (quality: AvatarQuality) => {
-    setConfig(prev => ({ ...prev, quality }));
+    setConfig((prev) => ({ ...prev, quality }));
   };
 
   return (
     <div className="relative h-screen w-screen bg-black overflow-hidden">
       {sessionState === StreamingAvatarSessionState.INACTIVE ? (
         // Pre-session: Beautiful wavy background with start button
-        <WavyBackground 
+        <WavyBackground
+          backgroundFill="black"
+          blur={10}
           className="max-w-4xl mx-auto pb-40"
           colors={["#38bdf8", "#818cf8", "#c084fc", "#e879f9", "#22d3ee"]}
-          waveWidth={50}
-          backgroundFill="black"
           speed="fast"
           waveOpacity={0.5}
-          blur={10}
+          waveWidth={50}
         >
           <div className="text-center space-y-8">
             <div className="space-y-4">
@@ -273,15 +302,16 @@ function InteractiveAvatar() {
                 AI Conversation 2.0
               </h1>
               <p className="text-lg md:text-xl mt-4 text-white/80 font-normal text-center max-w-2xl mx-auto leading-relaxed">
-                Leverage the power of Interactive avatars in every business and create beautiful conversations
+                Leverage the power of Interactive avatars in every business and
+                create beautiful conversations
               </p>
             </div>
-            
+
             <div className="pt-8">
-              <Button 
+              <Button
                 className="!px-12 !py-4 !text-lg !bg-gradient-to-r !from-blue-600 !to-purple-600 hover:!from-blue-700 hover:!to-purple-700 !rounded-xl !shadow-2xl !transform !transition-all !duration-300 hover:!scale-105 !border-0 !font-semibold !tracking-wide"
-                onClick={startSessionV2}
                 disabled={isRetrying}
+                onClick={startSessionV2}
               >
                 {isRetrying ? (
                   <div className="flex items-center gap-3">
@@ -312,7 +342,7 @@ function InteractiveAvatar() {
           <div className="absolute inset-0 pointer-events-none">
             {/* Top-left: Quality selector */}
             <div className="absolute top-6 left-6 pointer-events-auto">
-              <QualitySelector 
+              <QualitySelector
                 currentQuality={config.quality!}
                 onQualityChange={handleQualityChange}
               />

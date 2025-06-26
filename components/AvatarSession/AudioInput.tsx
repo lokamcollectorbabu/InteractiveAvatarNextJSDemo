@@ -22,7 +22,7 @@ export const AudioInput: React.FC = () => {
     <div className="relative">
       <Button
         className={`!p-6 !rounded-full !w-20 !h-20 relative !bg-gradient-to-r !from-blue-600 !to-purple-600 hover:!from-blue-700 hover:!to-purple-700 !shadow-2xl !transform !transition-all !duration-200 hover:!scale-105 ${
-          isUserTalking ? '!shadow-blue-500/50 !shadow-2xl' : ''
+          isUserTalking ? "!shadow-blue-500/50 !shadow-2xl" : ""
         }`}
         disabled={isVoiceChatLoading}
         onClick={handleMuteClick}
@@ -33,7 +33,7 @@ export const AudioInput: React.FC = () => {
             isUserTalking ? "animate-ping" : "opacity-0"
           }`}
         />
-        
+
         {/* Icon */}
         {isVoiceChatLoading ? (
           <LoadingIcon className="animate-spin text-white" size={32} />
@@ -43,11 +43,15 @@ export const AudioInput: React.FC = () => {
           <MicIcon className="text-white" size={32} />
         )}
       </Button>
-      
+
       {/* Status text */}
       <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 text-center">
         <span className="text-white/70 text-sm">
-          {isVoiceChatLoading ? "Connecting..." : isMuted ? "Tap to unmute" : "Listening..."}
+          {isVoiceChatLoading
+            ? "Connecting..."
+            : isMuted
+              ? "Tap to unmute"
+              : "Listening..."}
         </span>
       </div>
     </div>

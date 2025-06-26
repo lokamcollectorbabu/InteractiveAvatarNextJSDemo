@@ -81,32 +81,53 @@ export const useStreamingAvatarSession = () => {
     if (avatarRef.current) {
       avatarRef.current.off(StreamingEvents.STREAM_READY, handleStream);
       avatarRef.current.off(StreamingEvents.STREAM_DISCONNECTED, stop);
-      avatarRef.current.off(StreamingEvents.CONNECTION_QUALITY_CHANGED, handleConnectionQualityChanged);
+      avatarRef.current.off(
+        StreamingEvents.CONNECTION_QUALITY_CHANGED,
+        handleConnectionQualityChanged,
+      );
       avatarRef.current.off(StreamingEvents.USER_START, handleUserStart);
       avatarRef.current.off(StreamingEvents.USER_STOP, handleUserStop);
-      avatarRef.current.off(StreamingEvents.AVATAR_START_TALKING, handleAvatarStartTalking);
-      avatarRef.current.off(StreamingEvents.AVATAR_STOP_TALKING, handleAvatarStopTalking);
-      avatarRef.current.off(StreamingEvents.USER_TALKING_MESSAGE, handleUserTalkingMessage);
-      avatarRef.current.off(StreamingEvents.AVATAR_TALKING_MESSAGE, handleStreamingTalkingMessage);
+      avatarRef.current.off(
+        StreamingEvents.AVATAR_START_TALKING,
+        handleAvatarStartTalking,
+      );
+      avatarRef.current.off(
+        StreamingEvents.AVATAR_STOP_TALKING,
+        handleAvatarStopTalking,
+      );
+      avatarRef.current.off(
+        StreamingEvents.USER_TALKING_MESSAGE,
+        handleUserTalkingMessage,
+      );
+      avatarRef.current.off(
+        StreamingEvents.AVATAR_TALKING_MESSAGE,
+        handleStreamingTalkingMessage,
+      );
       avatarRef.current.off(StreamingEvents.USER_END_MESSAGE, handleEndMessage);
-      avatarRef.current.off(StreamingEvents.AVATAR_END_MESSAGE, handleEndMessage);
+      avatarRef.current.off(
+        StreamingEvents.AVATAR_END_MESSAGE,
+        handleEndMessage,
+      );
     }
-    
+
     clearMessages();
     stopVoiceChat();
     setIsListening(false);
     setIsUserTalking(false);
     setIsAvatarTalking(false);
     setStream(null);
-    
+
     // Stop avatar and then remove error handler to catch any shutdown errors
     await avatarRef.current?.stopAvatar();
-    
+
     // Remove error handler after stopAvatar completes
     if (avatarRef.current) {
-      avatarRef.current.off('error');
+      // Create a dummy handler for the off method
+      const dummyHandler = () => {};
+
+      avatarRef.current.off("error", dummyHandler);
     }
-    
+
     setSessionState(StreamingAvatarSessionState.INACTIVE);
   }, [
     handleStream,
@@ -154,8 +175,14 @@ export const useStreamingAvatarSession = () => {
       );
       avatarRef.current.on(StreamingEvents.USER_START, handleUserStart);
       avatarRef.current.on(StreamingEvents.USER_STOP, handleUserStop);
-      avatarRef.current.on(StreamingEvents.AVATAR_START_TALKING, handleAvatarStartTalking);
-      avatarRef.current.on(StreamingEvents.AVATAR_STOP_TALKING, handleAvatarStopTalking);
+      avatarRef.current.on(
+        StreamingEvents.AVATAR_START_TALKING,
+        handleAvatarStartTalking,
+      );
+      avatarRef.current.on(
+        StreamingEvents.AVATAR_STOP_TALKING,
+        handleAvatarStopTalking,
+      );
       avatarRef.current.on(
         StreamingEvents.USER_TALKING_MESSAGE,
         handleUserTalkingMessage,
@@ -186,12 +213,9 @@ export const useStreamingAvatarSession = () => {
       setSessionState,
       avatarRef,
       sessionState,
-      setConnectionQuality,
-      setIsUserTalking,
       handleUserTalkingMessage,
       handleStreamingTalkingMessage,
       handleEndMessage,
-      setIsAvatarTalking,
     ],
   );
 

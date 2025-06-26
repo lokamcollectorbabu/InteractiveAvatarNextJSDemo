@@ -18,7 +18,7 @@ export const AvatarVideo = forwardRef<HTMLVideoElement>(({}, ref) => {
           Connection: {connectionQuality}
         </div>
       )}
-      
+
       <video
         ref={ref}
         autoPlay
@@ -27,7 +27,7 @@ export const AvatarVideo = forwardRef<HTMLVideoElement>(({}, ref) => {
       >
         <track kind="captions" />
       </video>
-      
+
       {!isLoaded && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/50">
           <div className="text-white text-xl">Connecting...</div>
@@ -36,4 +36,5 @@ export const AvatarVideo = forwardRef<HTMLVideoElement>(({}, ref) => {
     </>
   );
 });
+
 AvatarVideo.displayName = "AvatarVideo";

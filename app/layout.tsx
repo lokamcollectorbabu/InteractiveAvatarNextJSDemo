@@ -35,9 +35,7 @@ export default function RootLayout({
     >
       <head />
       <body className="min-h-screen bg-black text-white overflow-hidden">
-        <main className="relative h-screen w-screen">
-          {children}
-        </main>
+        <main className="relative h-screen w-screen">{children}</main>
       </body>
     </html>
   );
