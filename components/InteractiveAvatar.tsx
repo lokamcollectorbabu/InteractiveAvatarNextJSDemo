@@ -305,9 +305,7 @@ function InteractiveAvatar() {
         <>
           {/* Main video container */}
           <div className="absolute inset-0">
-            {sessionState !== StreamingAvatarSessionState.INACTIVE && (
-              <AvatarVideo ref={mediaStream} />
-            )}
+            <AvatarVideo ref={mediaStream} />
           </div>
 
           {/* Semi-transparent overlay for controls */}
