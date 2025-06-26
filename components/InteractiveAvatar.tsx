@@ -24,7 +24,7 @@ import { WavyBackground } from "./ui/wavy-background";
 const HARDCODED_CONFIG: StartAvatarRequest = {
   quality: AvatarQuality.Medium,
   avatarName: "Graham_Chair_Sitting_public",
-  knowledgeId: "389e0c9a964c412480c1751cc30f1c3a",
+  knowledgeId: "55764ebc76ac4ff684e2f9c94c7ba1a3",
   voice: {
     rate: 1.5,
     emotion: VoiceEmotion.EXCITED,
