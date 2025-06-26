@@ -313,7 +313,7 @@ function InteractiveAvatar() {
             {/* Top-left: Quality selector */}
             <div className="absolute top-6 left-6 pointer-events-auto">
               <QualitySelector 
-                currentQuality={config.quality}
+                currentQuality={config.quality!}
                 onQualityChange={handleQualityChange}
               />
             </div>
