@@ -28,7 +28,7 @@ export const WavyBackground = ({
   waveOpacity?: number;
   [key: string]: any;
 }) => {
-  const noise = createNoise3D();
+  const noiseRef = useRef<any>(null);
   let w: number,
     h: number,
     nt: number,
@@ -75,13 +75,15 @@ export const WavyBackground = ({
   ];
 
   const drawWave = (n: number) => {
+    if (!noiseRef.current) return;
+    
     nt += getSpeed();
     for (i = 0; i < n; i++) {
       ctx.beginPath();
       ctx.lineWidth = waveWidth || 50;
       ctx.strokeStyle = waveColors[i % waveColors.length];
       for (x = 0; x < w; x += 5) {
-        var y = noise(x / 800, 0.3 * i, nt) * 100;
+        var y = noiseRef.current(x / 800, 0.3 * i, nt) * 100;
 
         ctx.lineTo(x, y + h * 0.5); // adjust for height, currently at 50% of the container
       }
@@ -101,6 +103,8 @@ export const WavyBackground = ({
   };
 
   useEffect(() => {
+    // Initialize noise function on client side only
+    noiseRef.current = createNoise3D();
     init();
 
     return () => {
