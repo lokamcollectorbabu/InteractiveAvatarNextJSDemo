@@ -11,6 +11,7 @@ import {
 } from "@heygen/streaming-avatar";
 import { useEffect, useRef, useState } from "react";
 import { useMemoizedFn, useUnmount } from "ahooks";
+import dynamic from "next/dynamic";
 
 import { Button } from "./Button";
 import { AvatarVideo } from "./AvatarSession/AvatarVideo";
@@ -21,7 +22,11 @@ import { StreamingAvatarProvider, StreamingAvatarSessionState } from "./logic";
 import { LoadingIcon } from "./Icons";
 import { MessageHistory } from "./AvatarSession/MessageHistory";
 import { QualitySelector } from "./AvatarSession/QualitySelector";
-import { WavyBackground } from "./ui/wavy-background";
+
+// Dynamically import WavyBackground to avoid SSR issues
+const WavyBackground = dynamic(() => import("./ui/wavy-background").then(mod => ({ default: mod.WavyBackground })), {
+  ssr: false,
+});
 
 const HARDCODED_CONFIG: StartAvatarRequest = {
   quality: AvatarQuality.Medium,
