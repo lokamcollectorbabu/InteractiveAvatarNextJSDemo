@@ -1,6 +1,6 @@
 import React from "react";
-
 import { AvatarQuality } from "@heygen/streaming-avatar";
+
 import { Select } from "../Select";
 
 interface QualitySelectorProps {

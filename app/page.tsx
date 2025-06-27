@@ -1,6 +1,11 @@
-"use client";
+import dynamic from "next/dynamic";
 
-import InteractiveAvatar from "@/components/InteractiveAvatar";
+const InteractiveAvatar = dynamic(
+  () => import("@/components/InteractiveAvatar"),
+  {
+    ssr: false,
+  },
+);
 
 export default function App() {
   return <InteractiveAvatar />;
