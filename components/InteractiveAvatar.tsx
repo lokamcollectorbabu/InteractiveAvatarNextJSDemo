@@ -24,7 +24,7 @@ import { MessageHistory } from "./AvatarSession/MessageHistory";
 import { QualitySelector } from "./AvatarSession/QualitySelector";
 
 // Dynamically import WavyBackground to avoid SSR issues
-const WavyBackground = dynamic(() => import("./ui/wavy-background").then(mod => ({ default: mod.WavyBackground })), {
+const WavyBackground = dynamic(() => import("./ui/wavy-background").then(mod => mod.WavyBackground), {
   ssr: false,
 });
 
