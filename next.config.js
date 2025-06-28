@@ -2,8 +2,10 @@
 const nextConfig = {
   transpilePackages: ['@heygen/streaming-avatar'],
   webpack: (config, { isServer }) => {
-    // Removed simplex-noise externalization as it's used in client-side components
-    // that are already dynamically imported with ssr: false
+    if (isServer) {
+      // Externalize simplex-noise for server-side build to prevent import errors
+      config.externals.push('simplex-noise');
+    }
     return config;
   }
 }
