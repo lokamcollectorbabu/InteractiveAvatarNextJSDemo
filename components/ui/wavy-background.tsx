@@ -50,14 +50,21 @@ export const WavyBackground = ({
   };
 
   const init = () => {
+    if (typeof window === 'undefined') return;
+    
     canvas = canvasRef.current;
+    if (!canvas) return;
+    
     ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    
     w = ctx.canvas.width = window.innerWidth;
     h = ctx.canvas.height = window.innerHeight;
     ctx.filter = `blur(${blur}px)`;
     nt = 0;
 
     window.onresize = function () {
+      if (typeof window === 'undefined' || !ctx) return;
       w = ctx.canvas.width = window.innerWidth;
       h = ctx.canvas.height = window.innerHeight;
       ctx.filter = `blur(${blur}px)`;
@@ -75,7 +82,7 @@ export const WavyBackground = ({
   ];
 
   const drawWave = (n: number) => {
-    if (!noiseRef.current) return;
+    if (!noiseRef.current || !ctx) return;
     
     nt += getSpeed();
     for (i = 0; i < n; i++) {
@@ -95,6 +102,8 @@ export const WavyBackground = ({
   let animationId: number;
 
   const render = () => {
+    if (!ctx) return;
+    
     ctx.fillStyle = backgroundFill || "black";
     ctx.globalAlpha = waveOpacity || 0.5;
     ctx.fillRect(0, 0, w, h);
@@ -104,11 +113,15 @@ export const WavyBackground = ({
 
   useEffect(() => {
     // Initialize noise function on client side only
-    noiseRef.current = createNoise3D();
-    init();
+    if (typeof window !== 'undefined') {
+      noiseRef.current = createNoise3D();
+      init();
+    }
 
     return () => {
-      cancelAnimationFrame(animationId);
+      if (animationId) {
+        cancelAnimationFrame(animationId);
+      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
