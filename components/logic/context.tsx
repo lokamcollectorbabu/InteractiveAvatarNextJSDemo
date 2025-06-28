@@ -226,7 +226,7 @@ export const StreamingAvatarProvider = ({
   children: React.ReactNode;
   basePath?: string;
 }) => {
-  const avatarRef = React.useRef<StreamingAvatar>(null);
+  const avatarRef = React.useRef<StreamingAvatar | null>(null);
   const voiceChatState = useStreamingAvatarVoiceChatState();
   const sessionState = useStreamingAvatarSessionState();
   const messageState = useStreamingAvatarMessageState();
