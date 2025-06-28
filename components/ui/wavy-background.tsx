@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { createNoise3D } from "simplex-noise";
 
 import { cn } from "@/lib/utils";
 
@@ -114,8 +113,11 @@ export const WavyBackground = ({
   useEffect(() => {
     // Initialize noise function on client side only
     if (typeof window !== 'undefined') {
-      noiseRef.current = createNoise3D();
-      init();
+      // Dynamically import simplex-noise only on client side
+      import('simplex-noise').then(({ createNoise3D }) => {
+        noiseRef.current = createNoise3D();
+        init();
+      });
     }
 
     return () => {
