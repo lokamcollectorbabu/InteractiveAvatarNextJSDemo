@@ -18,13 +18,18 @@ import { AvatarVideo } from "./AvatarSession/AvatarVideo";
 import { useStreamingAvatarSession } from "./logic/useStreamingAvatarSession";
 import { AvatarControls } from "./AvatarSession/AvatarControls";
 import { useVoiceChat } from "./logic/useVoiceChat";
-import { StreamingAvatarProvider, StreamingAvatarSessionState } from "./logic";
+import { StreamingAvatarSessionState } from "./logic";
 import { LoadingIcon } from "./Icons";
 import { MessageHistory } from "./AvatarSession/MessageHistory";
 import { QualitySelector } from "./AvatarSession/QualitySelector";
 
 // Dynamically import WavyBackground to avoid SSR issues
 const WavyBackground = dynamic(() => import("./ui/wavy-background").then(mod => ({ default: mod.WavyBackground })), {
+  ssr: false,
+});
+
+// Dynamically import StreamingAvatarProvider to avoid SSR issues
+const StreamingAvatarProvider = dynamic(() => import("./logic").then(mod => ({ default: mod.StreamingAvatarProvider })), {
   ssr: false,
 });
 
