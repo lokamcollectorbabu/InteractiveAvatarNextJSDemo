@@ -1,8 +1,20 @@
+'use client';
+
 import dynamic from "next/dynamic";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { ErrorLogViewer } from "@/components/ErrorLogViewer";
+import { errorLogger } from "@/lib/errorLogger";
+import { useEffect } from "react";
 
 // Dynamic import with no SSR to avoid workStore issues
 const InteractiveAvatar = dynamic(
-  () => import("@/components/InteractiveAvatar"),
+  () => import("@/components/InteractiveAvatar").catch((error) => {
+    errorLogger.log(error, {
+      component: 'InteractiveAvatar Dynamic Import',
+      props: { dynamicImport: true }
+    });
+    throw error;
+  }),
   {
     ssr: false,
     loading: () => (
@@ -14,5 +26,18 @@ const InteractiveAvatar = dynamic(
 );
 
 export default function App() {
-  return <InteractiveAvatar />;
+  useEffect(() => {
+    // Log page load
+    errorLogger.log('Page loaded successfully', {
+      component: 'App',
+      url: window.location.href
+    });
+  }, []);
+
+  return (
+    <ErrorBoundary>
+      <InteractiveAvatar />
+      {process.env.NODE_ENV === 'development' && <ErrorLogViewer />}
+    </ErrorBoundary>
+  );
 }
