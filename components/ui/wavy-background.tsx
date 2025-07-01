@@ -29,7 +29,7 @@ export const WavyBackground = ({
 }) => {
   const noiseRef = useRef<any>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const animationIdRef = useRef<number>();
+  const animationIdRef = useRef<number | null>(null);
   let w: number, h: number, nt: number, i: number, x: number, ctx: any, canvas: any;
 
   const getSpeed = () => {
