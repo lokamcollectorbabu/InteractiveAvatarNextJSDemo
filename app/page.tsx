@@ -2,18 +2,10 @@
 
 import dynamic from "next/dynamic";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { ErrorLogViewer } from "@/components/ErrorLogViewer";
-import { errorLogger } from "@/lib/errorLogger";
 
 // Dynamic import with no SSR to avoid workStore issues
 const InteractiveAvatar = dynamic(
-  () => import("@/components/InteractiveAvatar").catch((error) => {
-    errorLogger.log(error, {
-      component: 'InteractiveAvatar Dynamic Import',
-      props: { dynamicImport: true }
-    });
-    throw error;
-  }),
+  () => import("@/components/InteractiveAvatar"),
   {
     ssr: false,
     loading: () => (
@@ -28,7 +20,6 @@ export default function App() {
   return (
     <ErrorBoundary>
       <InteractiveAvatar />
-      {process.env.NODE_ENV === 'development' && <ErrorLogViewer />}
     </ErrorBoundary>
   );
 }

@@ -1,7 +1,6 @@
 'use client';
 
 import React, { Component, ErrorInfo, ReactNode } from 'react';
-import { errorLogger } from '@/lib/errorLogger';
 
 interface Props {
   children: ReactNode;
@@ -24,13 +23,10 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    errorLogger.log(error, {
-      component: 'ErrorBoundary',
-      props: {
-        componentStack: errorInfo.componentStack,
-        errorBoundary: true
-      }
-    });
+    // Only log in development
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Error caught by boundary:', error, errorInfo);
+    }
   }
 
   render() {
@@ -48,7 +44,7 @@ export class ErrorBoundary extends Component<Props, State> {
                 <h2 className="text-lg font-semibold text-gray-900">Something went wrong</h2>
               </div>
               <p className="text-gray-600 mb-4">
-                An error occurred while loading this component. The error has been logged for debugging.
+                An error occurred while loading this component. Please try refreshing the page.
               </p>
               <button
                 onClick={() => this.setState({ hasError: false })}

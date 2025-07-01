@@ -61,7 +61,8 @@ function InteractiveAvatar() {
   const [config, setConfig] = useState<StartAvatarRequest>(HARDCODED_CONFIG);
   const [isRetrying, setIsRetrying] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
-  const [isManualStop, setIsManualStop] = useState(false); // Track if user manually stopped
+  const [isManualStop, setIsManualStop] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const mediaStream = useRef<HTMLVideoElement>(null);
   const avatarRef = useRef<any>(null);
 
@@ -69,14 +70,10 @@ function InteractiveAvatar() {
   const requestMicrophonePermission = useMemoizedFn(async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-
-      // Close the stream immediately as we just needed permission
       stream.getTracks().forEach((track) => track.stop());
-
       return true;
     } catch (error) {
       console.error("Microphone permission denied:", error);
-
       return false;
     }
   });
@@ -84,89 +81,75 @@ function InteractiveAvatar() {
   const startSessionV2 = useMemoizedFn(async () => {
     try {
       setIsRetrying(false);
-      setIsManualStop(false); // Reset manual stop flag when starting new session
+      setIsManualStop(false);
+      setError(null);
 
       // Request microphone permission first
       const hasPermission = await requestMicrophonePermission();
 
       if (!hasPermission) {
-        alert(
-          "Microphone permission is required for voice interaction. Please allow microphone access and try again.",
-        );
-
+        setError("Microphone permission is required for voice interaction. Please allow microphone access and try again.");
         return;
       }
 
       const avatar = initAvatar(HARDCODED_API_KEY);
-
       avatarRef.current = avatar;
 
       // Enhanced error handling for WebRTC issues
       avatar.on(StreamingEvents.STREAM_DISCONNECTED, () => {
-        console.log("Stream disconnected");
-        // Only attempt reconnection if it wasn't a manual stop
         if (!isManualStop) {
-          console.log("Attempting reconnection...");
           handleConnectionError();
         }
       });
 
       avatar.on(StreamingEvents.STREAM_READY, (event) => {
-        console.log(">>>>> Stream ready:", event.detail);
-        setRetryCount(0); // Reset retry count on successful connection
+        setRetryCount(0);
+        setError(null);
       });
 
       // Voice chat event handlers
       avatar.on(StreamingEvents.USER_START, (event) => {
-        console.log(">>>>> User started talking:", event);
+        // User started talking
       });
 
       avatar.on(StreamingEvents.USER_STOP, (event) => {
-        console.log(">>>>> User stopped talking:", event);
+        // User stopped talking
       });
 
       avatar.on(StreamingEvents.USER_END_MESSAGE, (event) => {
-        console.log(">>>>> User end message:", event);
+        // User end message
       });
 
       avatar.on(StreamingEvents.USER_TALKING_MESSAGE, (event) => {
-        console.log(">>>>> User talking message:", event);
+        // User talking message
       });
 
       avatar.on(StreamingEvents.AVATAR_TALKING_MESSAGE, (event) => {
-        console.log(">>>>> Avatar talking message:", event);
+        // Avatar talking message
       });
 
       avatar.on(StreamingEvents.AVATAR_END_MESSAGE, (event) => {
-        console.log(">>>>> Avatar end message:", event);
+        // Avatar end message
       });
 
       avatar.on(StreamingEvents.AVATAR_START_TALKING, (e) => {
-        console.log("Avatar started talking", e);
+        // Avatar started talking
       });
 
       avatar.on(StreamingEvents.AVATAR_STOP_TALKING, (e) => {
-        console.log("Avatar stopped talking", e);
+        // Avatar stopped talking
       });
 
-      // Add error event handler for WebRTC issues with improved filtering
+      // Add error event handler for WebRTC issues
       avatar.on("error", (error) => {
-        // Check if this is a benign shutdown error during manual stop
         if (
           isManualStop &&
           error?.error?.errorDetail === "sctp-failure" &&
           error?.error?.sctpCauseCode === 12
         ) {
-          // Suppress this specific benign shutdown error
-          console.log(
-            "Benign WebRTC shutdown error suppressed during manual stop",
-          );
-
           return;
         }
 
-        console.error("Avatar error:", error);
-        // Only handle error if it wasn't a manual stop
         if (!isManualStop) {
           handleConnectionError();
         }
@@ -174,8 +157,6 @@ function InteractiveAvatar() {
 
       await startAvatar(config);
     } catch (error) {
-      console.error("Error starting avatar session:", error);
-      // Only handle error if it wasn't a manual stop
       if (!isManualStop) {
         handleConnectionError();
       }
@@ -183,7 +164,6 @@ function InteractiveAvatar() {
   });
 
   const handleConnectionError = useMemoizedFn(async () => {
-    // Don't retry if user manually stopped the session
     if (isManualStop) {
       return;
     }
@@ -192,19 +172,14 @@ function InteractiveAvatar() {
       setIsRetrying(true);
       setRetryCount((prev) => prev + 1);
 
-      console.log(`Attempting reconnection (${retryCount + 1}/3)...`);
-
-      // Stop current session
       try {
         await stopAvatar();
         stopVoiceChat();
       } catch (error) {
-        console.error("Error stopping avatar during retry:", error);
+        // Ignore errors during cleanup
       }
 
-      // Wait a bit before retrying
       setTimeout(() => {
-        // Double check that user didn't manually stop during the timeout
         if (!isManualStop) {
           startSessionV2();
         }
@@ -212,9 +187,7 @@ function InteractiveAvatar() {
     } else {
       setIsRetrying(false);
       if (!isManualStop) {
-        alert(
-          "Connection failed. Please check your internet connection and try again.",
-        );
+        setError("Connection failed. Please check your internet connection and try again.");
       }
     }
   });
@@ -226,33 +199,23 @@ function InteractiveAvatar() {
         sessionState === StreamingAvatarSessionState.CONNECTED
       ) {
         await interruptAvatar();
-        console.log("Avatar interrupted successfully");
       }
     } catch (error) {
-      console.error("Error interrupting avatar:", error);
+      // Ignore interrupt errors
     }
   });
 
   const handleStopSession = useMemoizedFn(async () => {
     try {
-      console.log("User manually stopping session");
-      setIsManualStop(true); // Set flag to prevent automatic restart
-      setIsRetrying(false); // Stop any retry attempts
-      setRetryCount(0); // Reset retry count
+      setIsManualStop(true);
+      setIsRetrying(false);
+      setRetryCount(0);
+      setError(null);
 
-      // Stop voice chat first
       stopVoiceChat();
-
-      // Stop avatar session (this will handle event listener cleanup)
       await stopAvatar();
-
-      // Clean up avatar reference
       avatarRef.current = null;
-
-      console.log("Session stopped successfully");
     } catch (error) {
-      console.error("Error stopping session:", error);
-      // Even if there's an error, ensure we're in the stopped state
       setIsManualStop(true);
       avatarRef.current = null;
     }
@@ -265,7 +228,6 @@ function InteractiveAvatar() {
       !isRetrying &&
       !isManualStop
     ) {
-      // Increased delay to give audio system more time to initialize
       setTimeout(() => {
         startVoiceChat();
       }, 2000);
@@ -273,7 +235,7 @@ function InteractiveAvatar() {
   }, [sessionState, startVoiceChat, isRetrying, isManualStop]);
 
   useUnmount(() => {
-    setIsManualStop(true); // Prevent any reconnection attempts during unmount
+    setIsManualStop(true);
     handleStopSession();
   });
 
@@ -313,6 +275,12 @@ function InteractiveAvatar() {
                 create beautiful conversations
               </p>
             </div>
+
+            {error && (
+              <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-4 max-w-md mx-auto">
+                <p className="text-red-200 text-sm">{error}</p>
+              </div>
+            )}
 
             <div className="pt-8">
               <Button

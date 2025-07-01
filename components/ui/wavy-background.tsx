@@ -28,14 +28,9 @@ export const WavyBackground = ({
   [key: string]: any;
 }) => {
   const noiseRef = useRef<any>(null);
-  let w: number,
-    h: number,
-    nt: number,
-    i: number,
-    x: number,
-    ctx: any,
-    canvas: any;
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const animationIdRef = useRef<number>();
+  let w: number, h: number, nt: number, i: number, x: number, ctx: any, canvas: any;
 
   const getSpeed = () => {
     switch (speed) {
@@ -62,14 +57,19 @@ export const WavyBackground = ({
     ctx.filter = `blur(${blur}px)`;
     nt = 0;
 
-    window.onresize = function () {
+    const handleResize = () => {
       if (typeof window === 'undefined' || !ctx) return;
       w = ctx.canvas.width = window.innerWidth;
       h = ctx.canvas.height = window.innerHeight;
       ctx.filter = `blur(${blur}px)`;
     };
 
+    window.addEventListener('resize', handleResize);
     render();
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
   };
 
   const waveColors = colors ?? [
@@ -90,15 +90,12 @@ export const WavyBackground = ({
       ctx.strokeStyle = waveColors[i % waveColors.length];
       for (x = 0; x < w; x += 5) {
         var y = noiseRef.current(x / 800, 0.3 * i, nt) * 100;
-
-        ctx.lineTo(x, y + h * 0.5); // adjust for height, currently at 50% of the container
+        ctx.lineTo(x, y + h * 0.5);
       }
       ctx.stroke();
       ctx.closePath();
     }
   };
-
-  let animationId: number;
 
   const render = () => {
     if (!ctx) return;
@@ -107,31 +104,34 @@ export const WavyBackground = ({
     ctx.globalAlpha = waveOpacity || 0.5;
     ctx.fillRect(0, 0, w, h);
     drawWave(5);
-    animationId = requestAnimationFrame(render);
+    animationIdRef.current = requestAnimationFrame(render);
   };
 
   useEffect(() => {
-    // Initialize noise function on client side only
+    let cleanup: (() => void) | undefined;
+
     if (typeof window !== 'undefined') {
-      // Dynamically import simplex-noise only on client side
       import('simplex-noise').then(({ createNoise3D }) => {
         noiseRef.current = createNoise3D();
-        init();
+        cleanup = init();
+      }).catch((error) => {
+        console.error('Failed to load simplex-noise:', error);
       });
     }
 
     return () => {
-      if (animationId) {
-        cancelAnimationFrame(animationId);
+      if (animationIdRef.current) {
+        cancelAnimationFrame(animationIdRef.current);
+      }
+      if (cleanup) {
+        cleanup();
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const [isSafari, setIsSafari] = useState(false);
 
   useEffect(() => {
-    // I'm sorry but i have got to support it on safari.
     setIsSafari(
       typeof window !== "undefined" &&
         navigator.userAgent.includes("Safari") &&
