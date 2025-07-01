@@ -17,7 +17,12 @@ const InteractiveAvatar = dynamic(
   },
 );
 
-export default function App() {
+// Explicitly define the page props interface to handle searchParams properly
+interface PageProps {
+  searchParams?: { [key: string]: string | string[] | undefined };
+}
+
+export default function App({ searchParams }: PageProps) {
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
